@@ -3,14 +3,16 @@
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
 canvas.width = 1200;
-canvas.height = 300;
+canvas.height = 200;
 context.lineWidth = 3;
+context.fillStyle = 'white';
+context.strokeStyle = 'gray';
 
 //rattle
-let length = 10;
+let numPoints = 3;
 let radius = 15;
-let spacing = canvas.width/(length + 2);
-let xInit = canvas.width/(length + 2);
+let spacing = canvas.width/(numPoints + 2);
+let xInit = canvas.width/(numPoints + 2);
 let yInit = canvas.height/2;
 
 let mouse = {
@@ -52,7 +54,6 @@ class Point {
     draw(){
         //context.moveTo(this.x + radius, this.y);
         context.arc(this.x, this.y, this.radius, 0, Math.PI*2, false);
-        context.stroke();
     }
 }
 
@@ -61,7 +62,7 @@ class Points {
         this.points = [];
         let x = xInit;
         let y = yInit;
-        while(length--){ //redefinition of length? 
+        while(numPoints--){ //redefinition of numPoints? 
             let point = new Point(x, y);
             this.points.push(point);
             x += spacing;
@@ -69,7 +70,10 @@ class Points {
         }
     }
     updateAndDraw(){
-        this.points.forEach(point => point.update().draw())
+        context.beginPath(); 
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        this.points.forEach(point => point.update().draw());
+        context.stroke();
     }
 }
 
@@ -81,17 +85,16 @@ class Points {
 //user interaction
 window.onmousedown = () => mouse.down = true;
 window.onmouseup = () => mouse.down = false;
-
 window.onmousemove = mouseMovement;
 
 function mouseMovement(e){
     //another way to prevent this event listener from firing if mouse.down = false?
     //is it worthwhile savings?
-    // if (!mouse.down){ 
-    //     return; 
-    // }
-    mouse.x = e.x - canvas.getBoundingClientRect().left;
-    mouse.y = e.y - canvas.getBoundingClientRect().top;
+    if (!mouse.down){ 
+        return; 
+    }
+    mouse.x = Math.floor(e.x - canvas.getBoundingClientRect().left);
+    mouse.y = Math.floor(e.y - canvas.getBoundingClientRect().top);
 }
 
 
@@ -100,7 +103,6 @@ let rattle = new Points();
 animationLoop();
 
 function animationLoop(){
-    //context.beginPath();
     rattle.updateAndDraw();
     //context.stroke();
     window.requestAnimationFrame(animationLoop);
