@@ -29,10 +29,6 @@ class Point {
         this.radius = radius;
         this.x = x;
         this.y = y;
-        this.xPrior = x;
-        this.yPrior = y;
-        this.xAcceleration = 0;
-        this.yAcceleration = 0;
         this.neighbor = null;
         this.pinned = false;
         this.color = 'orange';
@@ -46,8 +42,6 @@ class Point {
             let distance = Math.sqrt(dx * dx + dy * dy);
           
             if(distance < radius){
-                this.xPrior = this.x;
-                this.yPrior = this.y;
                 this.x = mouse.x;
                 this.y = mouse.y; 
             }
@@ -55,7 +49,6 @@ class Point {
 
         if(this.x > canvas.width - radius){
             this.x = canvas.width - radius;
-
         }
         if(this.x < radius){
             this.x = radius;
@@ -66,17 +59,6 @@ class Point {
         if(this.y < radius){
             this.y = radius;
         }
-
-        // let xDiff = this.x - this.xPrior; //could divide by resting length -- like spring;
-        // let yDiff = this.y - this.yPrior;
-        // let xNext = this.x + xDiff * springX; //could add acceleration term for fun
-        // let yNext = this.y + yDiff * springY;
-        
-        // this.xPrior = this.x;
-        // this.yPrior = this.y;
-        
-        // this.x = xNext;
-        // this.y = yNext;
 
         return this; //allow method chaining
     }
@@ -97,8 +79,6 @@ class Point {
         this.x += xShift;
         this.y += yShift;
 
-        //if(!this.neighbor.neighbor) return // fix first in place -- goes crazy
-        //if (this.neighbor.pinned) return;
         this.neighbor.x += xShift;
         this.neighbor.y += yShift;
     }
@@ -128,7 +108,6 @@ class Points {
             // kosher?
             // i !== 0 && constraint = points[i-1];
             let neighbor = i ? this.points[i - 1] : null;
-            //if(i%2 == 0) point.pinned = true;
             point.neighbor = neighbor;
             point.color = colorMaker(5, i, i, pointsCount);
             this.points.push(point);
@@ -144,7 +123,6 @@ class Points {
         context.beginPath(); 
         context.clearRect(0, 0, canvas.width, canvas.height);
         this.points.forEach(point => point.checkMouse().draw());
-        //context.stroke();
     }
 }
 
