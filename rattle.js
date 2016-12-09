@@ -9,15 +9,14 @@ context.fillStyle = 'white';
 context.strokeStyle = 'gray';
 
 //rattle
-let length = 3; //number of beads on rattle
-let radius = 15;
-let restDist = canvas.width/(length + 2);
-let xInit = canvas.width/(length + 2);
+let pointsCount = 30; //number of beads on rattle
+let radius = 30;
+let restDist = canvas.width/(pointsCount + 2);
+let xInit = canvas.width/(pointsCount + 2);
 let yInit = canvas.height/2;
-let timeStep = 0.2;
-let relaxationCount = 1; 
-let springX = 1;
-let springY = 1;
+let relaxationCount = 10; 
+let springX = 0.002;
+let springY = 0.002;
 
 let mouse = {
     down: false,
@@ -34,17 +33,17 @@ class Point {
         this.yPrior = y;
         this.xAcceleration = 0;
         this.yAcceleration = 0;
-        this.timeStep = timeStep;
         this.neighbor = null;
+        this.pinned = false;
+        this.color = 'orange';
     }
 
-
     //update x,y position based on previous position
-    update(){
+    checkMouse(){
         if(mouse.down){
-            let xDiff = mouse.x - this.x;
-            let yDiff = mouse.y - this.y;
-            let distance = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
           
             if(distance < radius){
                 this.xPrior = this.x;
@@ -52,6 +51,20 @@ class Point {
                 this.x = mouse.x;
                 this.y = mouse.y; 
             }
+        }
+
+        if(this.x > canvas.width - radius){
+            this.x = canvas.width - radius;
+
+        }
+        if(this.x < radius){
+            this.x = radius;
+        }
+        if(this.y > canvas.height - radius){
+            this.y = canvas.height - radius;
+        }
+        if(this.y < radius){
+            this.y = radius;
         }
 
         // let xDiff = this.x - this.xPrior; //could divide by resting length -- like spring;
@@ -70,66 +83,55 @@ class Point {
 
 
     pulling(){
-        if(!this.neighbor){ return; }
+        if(!this.neighbor) return;
 
         let dx = this.x - this.neighbor.x;
         let dy = this.y - this.neighbor.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);   
-        //approximation of velocity?
-        let diff = (dist - restDist)/dist; //try dividing by restDist variation
-        let xShift = dx * diff * 0.5;
-        let yShift = dy * diff * 0.5;
+        let dist = Math.sqrt(dx * dx + dy * dy);  
+
+        let diff = (restDist - dist)/dist; //try dividing by restDist variation
+        
+        let xShift = dx * diff * springX;
+        let yShift = dy * diff * springY;
 
         this.x += xShift;
         this.y += yShift;
 
+        //if(!this.neighbor.neighbor) return // fix first in place -- goes crazy
+        //if (this.neighbor.pinned) return;
         this.neighbor.x += xShift;
         this.neighbor.y += yShift;
     }
 
-    draw(){
-        //context.moveTo(this.x + radius, this.y);
+    draw(){     
+        context.beginPath()
+        context.fillStyle = this.color;
+        context.strokeStyle = this.color;
         context.arc(this.x, this.y, this.radius, 0, Math.PI*2, false);
+        if(this.neighbor){
+            context.moveTo(this.x - radius, this.y);
+            context.lineTo(this.neighbor.x + radius, this.neighbor.y);
+        }
+        context.fill();
+        context.stroke();
+        context.closePath();
     }
 }
-
-// class Constraint{
-//     constructor(p1, p2){
-//         this.p1.x = p1.x;
-//         this.p2.x = p2.x;
-//         this.p1.y = p1.y;
-//         this.p2.y = p2.y;
-//     }
-//     pulling(){
-//         let dx = this.p1.x - this.p2.x;
-//         let dy = this.p1.y - this.p2.y;
-//         let dist = Math.sqrt(dx * dx + dy * dy);   
-//         //approximation of velocity?
-//         let diff = (dist - restDist)/dist; //try dividing by restDist variation
-//         let xShift = dx * diff * 0.5;
-//         let yShift = dy * diff * 0.5;
-
-//         this.p1.x += xShift;
-//         this.p1.y += yShift;
-//         this.p2.x += xShift;
-//         this.p2.y += yShift;
-//     }
-//     //cloth example put draw method in here.
-// }
 
 class Points {
     constructor(){
         this.points = [];
         let x = xInit;
         let y = yInit;
-        for(let i = 0; i < length; i++){ //redefinition of length in while loop? 
+        for(let i = 0; i < pointsCount; i++){ 
             let point = new Point(x, y);
             // kosher?
             // i !== 0 && constraint = points[i-1];
             let neighbor = i ? this.points[i - 1] : null;
+            //if(i%2 == 0) point.pinned = true;
             point.neighbor = neighbor;
+            point.color = colorMaker(5, i, i, pointsCount);
             this.points.push(point);
-            //vs points.push(point) ??
             x += restDist;
         }
     }
@@ -138,18 +140,21 @@ class Points {
         for(let i = 0; i < relaxationCount; i++){
             this.points.forEach(point => point.pulling());
         }
-        //update canvas for mouse movement and draw
+        //update canvas 
         context.beginPath(); 
         context.clearRect(0, 0, canvas.width, canvas.height);
-        this.points.forEach(point => point.update().draw());
-        context.stroke();
+        this.points.forEach(point => point.checkMouse().draw());
+        //context.stroke();
     }
 }
 
-
-//constraints
-
-//points object
+function colorMaker(rCounter, gCounter, bCounter, length){
+    let r = 40;
+    let g = (length - gCounter) * 255 / length;
+    let b = bCounter * 255 / length;
+    let alpha = 0.8;
+    return 'rgba(' + r + ','+ g + ',' + b + ','+ alpha +')';
+}
 
 //user interaction
 window.onmousedown = () => mouse.down = true;
@@ -174,4 +179,3 @@ function animationLoop(){
     rattle.updateAndDraw();
     window.requestAnimationFrame(animationLoop);
 }
-
