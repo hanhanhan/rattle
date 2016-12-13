@@ -8,15 +8,15 @@ context.lineWidth = 3;
 context.fillStyle = 'white';
 context.strokeStyle = 'gray';
 
-//rattle
-let pointsCount = 30; //number of beads on rattle
+//points
+let pointsCount = 30; //number of beads on points
 let radius = 30;
 let restDist = canvas.width/(pointsCount + 2);
 let xInit = canvas.width/(pointsCount + 2);
 let yInit = canvas.height/2;
-let relaxationCount = 10; 
-let springX = 0.002;
-let springY = 0.002;
+let relaxationCount = 50; 
+let springX = 0.0001;
+let springY = 0.0003;
 
 let mouse = {
     down: false,
@@ -71,7 +71,7 @@ class Point {
         let dy = this.y - this.neighbor.y;
         let dist = Math.sqrt(dx * dx + dy * dy);  
 
-        let diff = (restDist - dist)/dist; //try dividing by restDist variation
+        let diff = (restDist - dist)/(dist+0.005); //try dividing by restDist variation
         
         let xShift = dx * diff * springX;
         let yShift = dy * diff * springY;
@@ -105,8 +105,6 @@ class Points {
         let y = yInit;
         for(let i = 0; i < pointsCount; i++){ 
             let point = new Point(x, y);
-            // kosher?
-            // i !== 0 && constraint = points[i-1];
             let neighbor = i ? this.points[i - 1] : null;
             point.neighbor = neighbor;
             point.color = colorMaker(5, i, i, pointsCount);
@@ -150,10 +148,10 @@ function mouseMovement(e){
 }
 
 //initialization
-let rattle = new Points();
+let points = new Points();
 animationLoop();
 
 function animationLoop(){
-    rattle.updateAndDraw();
+    points.updateAndDraw();
     window.requestAnimationFrame(animationLoop);
 }
